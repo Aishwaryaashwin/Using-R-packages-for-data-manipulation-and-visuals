@@ -1,0 +1,472 @@
+---
+title: "GDP: Country's Economic Growth Indicator."
+author: "Aishwarya Mysore Ashwinkumar"
+date: "09/01/2019"
+output:
+  word_document:
+    reference: GDP_ref.docx
+    toc: yes
+bibliography: prj_ref.bib
+---
+
+```{r setup, include=FALSE,echo=F,results='hide'}
+knitr::opts_chunk$set(echo = TRUE,results = 'hide')
+```
+
+\newpage
+
+# 1.Introduction:
+
+The total value of all the products produced in a country or nation account to Gross Domestic Product (GDP). Per capita income is the average income earned by a person in a specific region or a country. Whether it is created by people or immigrants, it does not matter. If they are within the boundaries of the government of the located country, their revenue is included in GDP.   
+GDP per capita is an economic output indicator of a country which accounts for its number of people. This separates the gross domestic product of the country by its population as a whole. It is one of the predominate parameters to gauge a country’s standard of living, quality of life that the people are leading and it also tells us how secure and prosperous a country is for every citizen residing in the country. GDP per capita of a country depends on various factors. It is being a dependent variable on many other external factors such as Population, Literacy rate, Development in electronic gadgets, Agricultural income, Mortality, Birthrate, Industrial development and services adds to the overall economic well-being of a country
+
+# 2.Research Question:
+
+In this research I have considered 227 countries of the world which belongs to 11 different regions. The main agenda of the research is to investigate various economic growth factors that affects a country’s GDP per capita. In this way the countries having poor GDP per capita can improvise their week performing sectors by adapting the methods and technicalities from the countries having a good GDP in order to attain a better GDP per capita value. By analyzing the dataset, I would like to answer the below questions:  
+
+**•	How do various economic growth factors contribute to achieve a robust GDP per capita income? **  
+**•	If a country lacks in one of the factors,does it affect the overall GDP per capita?**  
+
+
+
+
+# 3.Rationale:
+
+To answer my first question, I’m leveraging different R packages and libraries to visualize my findings which would deliver and prove it in a better way. The different growth factors which I’m considering here are overall literacy rate in a country, Migration rate, Infant mortality, Industrialization and services, Population, Birthrate and Death rate. Further, I’m going to investigate how each of these factors contribute to rise in a Country’s GDP per capita.  
+To answer my second question, I’m leveraging the above considered factors by targeting one of the poor performing factors for the countries having higher GDP to check if it really affects the overall GDP per capita.
+
+# 4.About the Dataset:
+
+I have gathered data pertaining to the GDP per capita for 227 different countries of the world which is having a cumulative data from 1970-2017 from Kaggle website. I found this dataset to be the appropriate one for my detailed analysis to gauge a country’s GDP on various growth factors. The dataset has all the best factors with which I can prove my findings @RN1.  
+
+The dataset consists of 20 different columns such as Country, Region, Population, Area, Population Density, Coastline, Net Migration, GDP per capita, Infant mortality, Literacy, Phones, Arable, Crops, Climate, Birthrate, Deathrate, Agriculture, Industry, Services and Others. Among these, I have considered 14 columns and their description is given below:
+
+ Column Name        	  | Description	                                  | Column type
+ -----------------------|-----------------------------------------------|------------
+ Country              	| Country Name	                                | Chr
+ Region	                | The region under which the country falls.     | Chr
+ Population	            | Total population of the country.              | Num
+ Net migration       	  | People migrating to or from the country.      | Num
+ Infant_Mortality_per_k | Infant mortality per 1000 live births.        | Num
+ GDP ($ per capita)   	| GDP per capita of the country.	              | Num
+ Literacy (%)	          | Literacy rate.                             	  | Num
+ Arable (%)	            | Cultivable land available.	                  | Num
+ Crops (%)            	| Crops cultivated.                            	| Num
+ Birthrate	            | Average birthrate for every 1000.           	| Num
+ Deathrate           	  | Average deathrate for every 1000.          	  | Num
+ Agriculture         	  | Agriculture practiced in  country.         	  | Num
+ Industry	              | Industrial input to the country.	            | Num
+ Service	              | Various services rendered in a country.      	| Num
+
+
+# 5.Libraries used:
+```{r include=TRUE,echo=TRUE,results='hide',warning=FALSE,message=FALSE}
+#install.packages("ggalt")
+#install.packages("formattable")
+#install.packages("rgeos")
+library("ggalt")
+library("ggthemes")
+library("ggpubr")
+library("ggrepel")
+library("rnaturalearth")
+library("rnaturalearthdata")
+library("sf")
+library("gridExtra")
+library("dplyr")
+library("tidyr")
+library("cowplot")
+library("reshape2")
+library("data.table")
+library("ggplot2")
+library("dplyr")
+library("maps")
+library("viridis")
+library("formattable")
+library("scales")
+library("rgeos")
+theme_update(axis.title = element_text(size = 20),axis.text = element_text(size = 15),title = element_text(size = 25))
+```
+# 6.Data Preperation:
+
+Load the dataset to “WorldCountries” dataframe. As a part of data preparation, data cleaning must be carried out which includes:  
+
+1. handling the missing or blank values.    
+2. removing unnecessary columns.    
+3. Renaming the Column Names.  
+4. Handling the “NA” values by replacing it with zero.  
+5. Replacing “,” by “.” for all the numerical values.  
+6. Changing the class of the attributes as per their values.  
+
+
+
+```{r Loading and reading the dataset}
+# load the dataset and replace all the missing values with "NA".
+WorldCountries = read.csv("countries of the world.csv", na.strings=c("","NA"),header=TRUE)
+```
+
+
+
+```{r pressure, echo=FALSE}
+# The loaded "WorldCountries" dataframe.
+WorldCountries
+```
+
+
+```{r}
+# To display the Column names of "WorldCountries" dataframe.
+colnames(WorldCountries)
+
+```
+
+
+```{r}
+# Dropping unnecessary columns.
+New_WorldCountries <- select(WorldCountries,-c("Area..sq..mi..","Pop..Density..per.sq..mi..","Coastline..coast.area.ratio.","Phones..per.1000.","Other....","Climate"))
+colnames(New_WorldCountries)
+```
+
+```{r}
+# Rename the columns and load to "Countries_df".
+Countries_df <- New_WorldCountries %>% 
+  rename(
+    Migration=Net.migration,
+    Infant_mortality_per_k=Infant.mortality..per.1000.births.,
+    GDP_per_capita_USD=GDP....per.capita.,
+    Literacy_percent=Literacy....,
+    Deathrate_per_k=Deathrate,
+    Birthrate_per_k=Birthrate,
+    Cultivable_Land=Arable....,
+    Crops=Crops....,
+     )
+```
+
+
+```{r}
+# Replacing the "NA" values with zero.
+Countries_df$Industry <- as.character(Countries_df$Industry) %>% replace_na(0)
+Countries_df$Agriculture <- as.character(Countries_df$Agriculture) %>% replace_na(0)
+Countries_df$Service <- as.character(Countries_df$Service) %>% replace_na(0)
+Countries_df$Cultivable_Land <- as.character(Countries_df$Cultivable_Land) %>% replace_na(0)
+Countries_df$Crops <- as.character(Countries_df$Crops) %>% replace_na(0)
+Countries_df$Birthrate_per_k <- as.character(Countries_df$Birthrate_per_k) %>% replace_na(0)
+Countries_df$Deathrate_per_k <- as.character(Countries_df$Deathrate_per_k) %>% replace_na(0)
+Countries_df$Migration <- as.character(Countries_df$Migration) %>% replace_na(0)
+Countries_df$Infant_mortality_per_k <- as.character(Countries_df$Infant_mortality_per_k) %>% replace_na(0)
+```
+
+
+```{r}
+# Replacing "," with "." as all the numeric values have "," instead of "."
+Countries_df <- sapply(Countries_df, gsub, pattern = ",", replacement= ".")
+Countries_df <- as.data.frame(Countries_df)
+Countries_df
+```
+
+
+```{r}
+# Formatting the “Agriculture” column as it should contain only numbers.
+Countries_df$Agriculture[Countries_df$Agriculture=='cal'] <- 0
+Countries_df
+```
+```{r}
+# Changing the column class from factor to  character and numeric to ease further manipulations.
+Countries_df$Literacy_percent <- as.numeric(as.character(Countries_df$Literacy_percent))
+Countries_df$Population <- as.numeric(as.character(Countries_df$Population))
+Countries_df$Migration <- as.numeric(as.character(Countries_df$Migration))
+Countries_df$GDP_per_capita_USD <- as.numeric(as.character(Countries_df$GDP_per_capita_USD))
+Countries_df$Agriculture <- as.numeric(as.character(Countries_df$Agriculture))
+Countries_df$Crops <- as.numeric(as.character(Countries_df$Crops))
+Countries_df$Cultivable_Land <- as.numeric(as.character(Countries_df$Cultivable_Land))
+Countries_df$Industry <- as.numeric(as.character(Countries_df$Industry))
+Countries_df$Service <- as.numeric(as.character(Countries_df$Service))
+Countries_df$Birthrate_per_k <- as.numeric(as.character(Countries_df$Birthrate_per_k))
+Countries_df$Deathrate_per_k <- as.numeric(as.character(Countries_df$Deathrate_per_k))
+Countries_df$Infant_mortality_per_k <- as.numeric(as.character(Countries_df$Infant_mortality_per_k))
+Countries_df$Country <- as.character(Countries_df$Country)
+Countries_df$Region <- as.character(Countries_df$Region)
+```
+# 7.Data Manipulation and Vizualisation:
+Now the data is set to perform necessary manipulations and visualize them using different plots.
+
+# 7.1.An overview of the countries having high GDP per capita value. 
+
+```{r fig.width=11, fig.height=8}
+# filtering out the top fifteen countries based on their gdp to plot the below graph.
+GDP_plot <- Countries_df%>%
+arrange(desc(GDP_per_capita_USD))%>%
+head(n=15)%>%
+select(Country,GDP_per_capita_USD,Region)
+
+ggplot(GDP_plot,aes(Country,GDP_per_capita_USD))+
+geom_col(aes(fill=as.factor(Region)))+
+geom_text(aes(label= GDP_per_capita_USD, hjust= 1,vjust=0.3),size=5.5)+
+theme(axis.text.x = element_blank(),axis.ticks.x = element_blank())+
+labs(y="GDP per capita in USD",title="Top 15 countries with highest GDP per capita.",fill="Regions")+ theme_bw(base_size = 17)+
+theme(axis.text.x = element_text(size=14,face="bold"),axis.text.y=element_text(size=14,face="bold"),axis.title.y=element_text(size=18,face="bold"),axis.title.x=element_text(size=18,face="bold"))+
+coord_flip() 
+```
+
+The visualization depicts the top 15 countries based on their per capita. Luxembourg is having the highest GDP of 55100USD. United States and Norway stand second with a GDP of 37800 USD. Also, the countries which are located under the Western European region are showing high per capita value. 
+
+
+# 7.2.Effect of different economic growth factors on GDP per capita.
+
+## 1.	Effect of Literacy rate on GDP per capita.
+
+```{r,fig.width=10,fig.height=6}
+# Filtering out the top 15 and least 15 literate countries to compare their GDP per capita values.
+  Literacy_df1 <- Countries_df%>%
+  filter(Countries_df$Literacy_percent>= 70.0)%>%
+  arrange(desc(Literacy_percent)) %>%
+  head(n =15)%>%
+  select(Literacy_percent,GDP_per_capita_USD,Country)
+
+ Lit_plot1 <- ggplot(Literacy_df1,aes(x = GDP_per_capita_USD, y = Literacy_percent)) + geom_point(aes(color=Country), size =  3.5) + 
+ geom_line(group=1,color="steelblue",size=0.8,alpha=0.5) + 
+ labs(title = "GDP for top 15 Literate countries",
+       x = "Per Capita Income", 
+       y = "Literacy Rate",
+      caption= "Graph 1") +
+   scale_x_continuous(breaks=seq(0,60000,5000))+
+   theme_classic()+theme(axis.text.x = element_text(size = 12,face = "bold"),axis.text.y = element_text(size = 12,face = "bold"))+theme(axis.title.y=element_text(face="bold", size=15))+ theme(axis.title.x=element_text(face="bold", size=15))+
+   theme(plot.title = element_text(face = "bold",colour = "#9E0142",size = 20))
+ Lit_plot1
+
+
+  Literacy_df2 <- Countries_df%>%
+  filter(Countries_df$Literacy_percent<70.0)%>%
+  arrange((Literacy_percent)) %>%
+  head(n = 15)%>%
+  select(Literacy_percent,GDP_per_capita_USD,Country)
+  
+  circle_Df <- Literacy_df2%>%
+  filter(GDP_per_capita_USD <=3000)
+  
+Lit_plot2 <- ggplot(Literacy_df2,aes(x = GDP_per_capita_USD, y = Literacy_percent),horizontal=TRUE) +  geom_point(aes(color=Country), size = 3.5) + 
+geom_line(group=1,color="steelblue",size=0.8,alpha=0.5) +
+labs(title = "GDP for top 15 Illiterate countries",
+       x = "Per Capita Income", 
+       y = "Literacy Rate",
+     caption="Graph 2") +
+  scale_x_continuous(breaks=seq(0,25000,2000))+
+  scale_y_continuous(breaks=seq(0,100,5))+
+      geom_encircle(aes(GDP_per_capita_USD,Literacy_percent), 
+                data=circle_Df, 
+                color="red", 
+                size=3,
+                expand=0.06)+theme_classic()+
+  theme(axis.text.x = element_text(size = 12,face = "bold"),axis.text.y = element_text(size = 12,face = "bold"))+
+  theme(axis.title.y=element_text(face="bold", size=15))+ theme(axis.title.x=element_text(face="bold", size=15))+
+  theme(plot.title = element_text(face = "bold",colour = "#9E0142",size = 20))
+
+Lit_plot2
+
+```
+
+The first graph gives the comparison of per capita with the top 15 literate countries having their literacy rate about 99.7% to 100%. These countries with very high literacy rate have their per capita ranging from 5000USD to 55000USD. Among these Andorra, Australia, Denmark, Finland, Liechtenstein, Luxembourg and Norway are the countries which have achieved 100% literacy rate. Whereas, the second graph illustrates the per capita for 15 countries with the least literacy rate ranging from 17% to 40%. Most of their per capita lay around 350USD to 2000USD. This number is not at all feasible when compared to those for literate countries. The outcome of the visualization is that every country should promote education to maintain an acceptable literacy rate as it is one of the GDP quantifying factors. 
+
+
+## 2.Impact of Migration on GDP per capita.
+
+```{r,fig.height=6.5,fig.width=8}
+# filtering the top 20 countries based on GDP to check on their migration rate.
+Migration_df <- Countries_df%>%
+  filter(Migration>0|Migration<0)%>%
+  arrange(desc(GDP_per_capita_USD))%>%
+  head(n = 20)%>% 
+  select(Country,Migration,GDP_per_capita_USD)
+
+theme_set(theme_bw())
+
+migplot <- ggplot(Migration_df, aes(x=Country, y=GDP_per_capita_USD, label=Migration)) + 
+geom_point(stat='identity', fill="black", size=10) +
+geom_segment(aes(x=Country, 
+                   xend=Country, 
+                   y=25000, 
+                   yend=GDP_per_capita_USD), 
+               color = "black") +
+geom_text(color="white", size=3.2)+
+labs(title="Migration rate for top 20 countries based on GDP", 
+       y="GDP per capita in USD") + 
+scale_y_continuous(breaks = seq(25000,55000,2500))+theme_classic()+theme(axis.text.x = element_text(size = 8,face = "bold"),axis.text.y = element_text(size = 12,face = "bold"))+theme(axis.title.y=element_text(face="bold", size=12))+ theme(axis.title.x=element_text(face="bold", size=12))+
+coord_flip()
+plot(migplot)
+
+```
+
+The visualization outlines the migration rate for the countries having greater GDP per capita income.These are the countries with high GDP ranging from 25000USD to 55000USD. All these countries are having a positive migration rate which means that people are relocating to these countries for education purpose, work, environmental factors, family influences, personal needs and for various such reasons. When people become immigrants to a country, their income also constitutes to the overall GDP per capita of the country. It is because they fall under the boundaries of that country’s law enforcements. Therefore the countries with positive migration rate are having a good GDP per capita.
+
+
+## 3.Importance of Industry and Services to attain a robust GDP per capita.
+
+```{r,fig.asp=1,fig.height=6,fig.width=10,theme_update(axis.title = element_text(size = 15),axis.text = element_text(size = 20),title = element_text(size = 25))}
+# Obtaining the collective percentage of Industry and Services for top and least 5 countries based on industry and GDP in order to compare their impact on each other.
+Industry_df1 <- Countries_df%>%
+  filter(Industry>0&Service>0)%>%
+  transmute(IndustryandServices=(Industry+Service)*100,GDP_per_capita_USD,Country)%>%
+ arrange((IndustryandServices))%>%
+head(n =5)
+
+plot1 <- ggplot(Industry_df1,aes(x=GDP_per_capita_USD, y=IndustryandServices, fill = Country))+
+  geom_bar(stat = "identity")+
+  scale_y_continuous(breaks = seq(0,50,10))+
+  facet_wrap(~Country,scales = "free_x",nrow = 1)+theme_bw(base_size = 16)+
+  theme(axis.text.x = element_blank(),axis.ticks.x = element_blank(), legend.position = "none",axis.text.y = element_text(size = 12,face = "bold"))+
+  geom_text_repel(data = Industry_df1, aes(GDP_per_capita_USD, IndustryandServices, label = GDP_per_capita_USD),size =5,hjust=0,vjust=0)+
+  labs(y="Industry and Services",x= "GDP per capita",
+       title="Effect of Industry and Services on GDP", subtitle="Countries having lesser industry and services have less GDP ")+
+  theme(plot.title = element_text(face = "bold",colour = "#9E0142",size = 20))+
+  scale_fill_brewer(palette="YlOrRd")
+
+Industry_df2 <- Countries_df%>%
+  filter(Industry>0&Service>0)%>%
+  transmute(IndustryandServices=(Industry+Service)*100,GDP_per_capita_USD,Country)%>%
+ arrange(desc(GDP_per_capita_USD))%>%
+head(n =5)
+
+plot2 <-ggplot(Industry_df2,aes(x=GDP_per_capita_USD, y=IndustryandServices,fill = Country))+
+  geom_bar(stat = "identity")+
+  facet_wrap(~Country,scales = "free_x",nrow = 1)+geom_text_repel(data = Industry_df2, aes(GDP_per_capita_USD, IndustryandServices, label = GDP_per_capita_USD),size = 5,hjust=0,vjust=0)+scale_y_continuous(labels = scales::comma)+
+  theme_bw(base_size = 16)+
+  theme(axis.text.x = element_blank(),axis.ticks.x = element_blank(), legend.position = "none",
+        axis.text.y = element_text(size = 12,face = "bold"))+
+  labs(y="Industry and Services",x= "GDP per capita",
+subtitle = "Countries with more industry and services will increase the GDP")
+
+ggarrange(plot1,plot2,nrow=2)
+
+```
+
+Industries are one of the key growth factors which adds to a country’s economic development. Industrialization enables the countries to leverage their scarce resources in an optimal way. Industries create more employment opportunities and elevates the quantity and quality of goods manufactured in a country. More standard goods will help the country to achieve a good trading economy. In this way the per capita income is also increased.   
+Various services such as healthcare, financial, human resources, retail, education and information technology contribute to a country’s service sector. Every outcome or end product has a component called service in it. Better the quality of the service rendered, better the outcome. In each sector, industries have their product for which the services need to be supplied which in turn increases employment and hence an increase in GDP per capita.  
+The Visualization showcase the comparison of GDP per capita for countries having more Industry and services percentage with the ones having less industry and services. Somalia has 35% of Industry and Services for which its per capita is 500USD whereas Luxembourg have 99% with 55100USD as per capita. The takeaway from this graph is higher the industry and services, higher the GDP per capita.
+
+## 4.Adverse effect of Infant mortality on GDP per capita.
+
+```{r}
+# Plotiing Infant mortality versus GDP for evevry country.
+Mortality_df <- Countries_df%>%
+  filter(!Infant_mortality_per_k==0.0)%>%
+  arrange((Infant_mortality_per_k))%>%
+  select(Infant_mortality_per_k,GDP_per_capita_USD,Country)
+
+Mortality_plot <- ggplot(Mortality_df)+
+  geom_jitter(aes(x=GDP_per_capita_USD,y=Infant_mortality_per_k),col="green",size=3,alpha=0.5)+
+  theme_classic()+
+  scale_x_continuous(breaks = seq(500,60000,10000))+
+  scale_y_continuous(breaks = seq(0,200,50))+
+  labs(title="Effect of Infant Mortality on GDP",x="GDP per capita",y="Infant Mortality per 1000 live births")+
+  theme(axis.title.y=element_text(face="bold", size=10))+ 
+  theme(axis.title.x=element_text(face="bold", size=11))+
+  theme(axis.text.x = element_text(size = 10,face = "bold"),axis.text.y = element_text(size = 10,face = "bold"))
+Mortality_plot
+```
+
+The Visualization describes how the infant mortality rate negatively impacts GDP per capita.We can clearly make out that where the infant mortality rate is more, the GDP is very less.Afghanistan has 163.07 infant mortality rate per 1000 live births and its GDP per capita is 700USD whereas Singapore has the least mortality rate of 2.29 with 23700USD per capita. A child’s survival is very important in order to measure the health status of a country. Pregnancy complications, low birth weight, premature delivery, birth defects and poverty are the 5 main reasons for neonatal death. A country with good medical facilities will have less mortality rate. Also, the unsatisfied basic needs and uneducated women impact infant mortality. 
+
+## 5.Effect of Population on GDP per capita.
+
+```{r,fig.height=8,fig.width=10,theme_update(axis.title = element_text(size = 20),axis.text = element_text(size = 15),title = element_text(size = 25))}
+# Obtaining the GDP for top 10 populated countries and its geographical representation.
+options(scipen = 999)
+Poulation_df <- Countries_df%>%
+  arrange(desc(Population))%>%
+  head(n = 10)%>%
+  transmute(Population,GDP_per_capita_USD,Country)
+
+Pop_plot <- ggplot(data=Poulation_df, aes(x=GDP_per_capita_USD, y=Population, group=1)) +
+geom_line(linetype = "dashed",col="orange",size=1)+
+geom_point(col="blue")+scale_x_continuous(breaks=seq(0,50000,5000))+scale_y_continuous(labels=scales::comma)+
+geom_text_repel(data = Poulation_df, aes(GDP_per_capita_USD, Population, label = Country),size =3)+theme_classic()+
+theme(axis.text.x = element_text(angle=45, vjust=0.6,size=9,face="bold"),axis.text.y=element_text(size=9,face="bold"),axis.title.y=element_text(size=12,face="bold"),axis.title.x=element_text(size=12,face="bold"))+
+  labs(title="Impact of Population on GDP growth")
+
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+names(world)[names(world) == "pop_est"] <- "Population"
+Population_map <- ggplot(data = world) +
+    geom_sf(aes(fill = Population)) +
+    scale_fill_viridis_c(option = "plasma", trans = "sqrt")+ 
+  xlab("Longitude") + ylab("Latitude") +
+    ggtitle("Geographical representation of population")+ 
+  theme_bw(base_size = 14)+
+  theme( axis.title.y=element_text(size=12,face="bold"),axis.title.x=element_text(size=12,face="bold"))
+    
+ ggarrange(Population_map,Pop_plot,nrow=2) 
+
+
+```
+
+The geographical map shows that China and India are the countries with dense population. The second graph shows the top 10 densely populated countries with China and India having more than one billion people. When we look at the per capita income of China and India, it is not that great when compared to other populated countries. We think that more population constitutes more human workforce. But with the overpopulated countries, the government is unable to accommodate people and supply all the satisfying needs. It creates scarcity of resources, which increases the poverty and unemployment rate. The countries should adapt the best population controlling techniques in order to maintain a balanced demand and supply ratio. It infers that the countries with the highest population doesn’t necessarily show up the highest GDP per capita.
+
+
+## 6.Impact of Birth and Death rate on GDP per capita.
+
+
+```{r,fig.width=6}
+
+Bith_death <- Countries_df%>%
+arrange(desc(Birthrate_per_k))%>%
+head(n = 10)%>%
+transmute(Country,Birthrate_per_k,GDP_per_capita_USD,Deathrate_per_k)
+
+BDPlot <- ggplot(Bith_death, aes(x=GDP_per_capita_USD)) + 
+geom_area(aes(y=Birthrate_per_k,fill="Birthrate_per_k")) + 
+geom_area(aes(y=Deathrate_per_k, fill="Deathrate_per_k"))+
+scale_y_continuous(breaks = seq(10,100,10))+
+scale_x_continuous(breaks = seq(500,2000,100))+theme_bw(base_size =14)+
+labs(title="Effect of Birthrate and Deathrate on GDP",y="Birthrate and Deathrate", fill = "Birth and Death rates",x="GDP Per Capita")+
+  theme(axis.text.x = element_text(size=8,face="bold"),axis.text.y=element_text(size=9,face="bold"),axis.title.y=element_text(size=12,face="bold"),axis.title.x=element_text(size=12,face="bold"),legend.position = "bottom")
+BDPlot
+                
+```
+
+
+The graph shows the effect of birthrate and deathrate on GDP per capita. The countries having high birthrate and less deathrate show less per capita value. As every birth adds to the population of the country as the country is required to cater each one with necessary needs. As we observe that GDP per capita is increased with increase in deathrate and decrease in birthrate. Hence a balanced birth and deathrate account for a fair GDP value.
+
+## 7. Impact of a poor factor(s) on overall GDP.
+```{r}
+AGRI_LOW<-Countries_df%>%
+  filter(!Agriculture==0)%>%
+  filter(Agriculture*100<=1.5)%>%
+  filter(GDP_per_capita_USD>=30000)%>%
+  arrange(desc(GDP_per_capita_USD))%>%
+  transmute(Country,GDP_USD=GDP_per_capita_USD,"Agriculture" = Agriculture*100,"Literacy"=Literacy_percent,"Indus_Ser"=(Industry+Service)*100,Inf_mortality=(Infant_mortality_per_k/1000)*100)  
+
+AGRI_LOW<-data.frame(AGRI_LOW)
+
+AGRI_LOW$Agriculture <- paste0(AGRI_LOW$Agriculture,"%")
+AGRI_LOW$Literacy <- paste0(AGRI_LOW$Literacy,"%")
+AGRI_LOW$Indus_Ser <- paste0(AGRI_LOW$Indus_Ser,"%")
+AGRI_LOW$Inf_mortality <- paste0(AGRI_LOW$Inf_mortality,"%")
+
+```
+
+
+```{r echo=TRUE,results='asis',axis.text=0.1}
+library(knitr)
+kable(AGRI_LOW[,],caption = "Data for top five countries")
+```
+
+The above data table depict how other growth factors compensate overall GDP per capita when one of the factors is not performing well. The top 5 countries with highest GDP per capita have their agriculture less than 2%. But other growth factors such as Literacy rate, Mortality rate, Industry and services compensate it to achieve an optimal GDP per capita income. Say for example, consider Luxembourg whose agriculture is 1% , Whereas its literacy rate is 100%, Industry and Services account to 99% and Infant mortality is as less as 0.481 maintains a GDP of 55100USD.Eventhough the agriculture's contribution to the country's GDP is very less, the other factors are adding value to maintain the GDP value. In such cases, a poor factor does not necessarily attenuate the overall GDP which concludes my second research question.
+ 
+
+
+# 8. Conclusion:
+The above detailed analysis infers that Literacy rate, Migration, Industry and Services, Infant Mortality, Population, Birthrate and Deathrate are the key aspects which are responsible for the rise in a Country’s GDP per capita income. Each of these visualisations helped me to answer my research questions in a more accurate way. Eventhough if the country is lacking in one or few factors and if all other factors are maintaining their margin then those factors compensate to maintain a stable GDP per capita value.  
+
+It is very important for every country to maintain a good GDP value as it is one of the vital components to guage a country's economic status.However, none of the countries will be having everything set right in place. Even the countries with highest GDP value will lack in few aspects. By evaluating a single factor one cannot decide on the growth of a Country’s GDP per capita. It should always be combinedly depicted with all other growth factors.
+
+
+
+
+\newpage
+# 9. Reference 
+```{r}
+
+
+```
+```{r}
+
+```
+
